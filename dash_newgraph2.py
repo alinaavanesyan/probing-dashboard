@@ -829,29 +829,31 @@ if __name__ == "__main__":
                 dbc.Row([
                     dbc.Col([
                         html.H1('Probing results'),
-                        html.Hr(),
+                    ], width=6),
+
+                    dbc.Col([
                         html.H5('Choose a model:'),
+                    ], width=3),
+
+                    dbc.Col([
                         dcc.Dropdown(
                             id='model_selection',
                             options = different_models,
                             value = model_names[0], 
-                            style={'width': '40%' }),
-                        dcc.Graph(id='graph1'),
-                        html.P(id='note_graph1', style={"padding-bottom": "2rem"}),
-                    ], width=10),
-
-                    dbc.Col([
-                        dcc.Dropdown(
-                            options=[
-                            {'label': 'number_of_languages', 'value': 'number_of_languages'},
-                            {'label': 'number_of_files', 'value': 'number_of_files'}],
-                            value = 'number_of_languages',
-                            id='parameter_graph1'
-                        )
-                    ], width=2),
-                
+                            style={'width': '100%' }),
+                    ], width=3),
                 ]),
             ]),
+                
+            html.Hr(),
+            dcc.Dropdown(
+            options=[
+            {'label': 'number_of_languages', 'value': 'number_of_languages'},
+            {'label': 'number_of_files', 'value': 'number_of_files'}],
+            value = 'number_of_languages',
+            id='parameter_graph1', style={'width': '60%'}),
+            dcc.Graph(id='graph1'),
+            html.P(id='note_graph1', style={"padding-bottom": "2rem"}),
 
             html.Div(children=[
                 dbc.Row([
