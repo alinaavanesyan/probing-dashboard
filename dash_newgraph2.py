@@ -689,7 +689,7 @@ def update_output(model_name, family, quantity):
                 pattern_line.append((b, round(median, 3)))
             for name in nam_line:
                 distances[category][name] = frechet_distance(curves[category][name], pattern_line)
-            distances1 = dict(sorted(distances[category].items(), key=lambda x: -x[1]), reverse=True)
+            distances1 = dict(sorted(distances[category].items(), key=lambda x: -x[1], reverse=True))
             distances2 = dict(sorted(distances[category].items(), key=lambda x: -x[1]))
             distances1_names = list(distances1.keys())
             distances2_names = list(distances2.keys())            
