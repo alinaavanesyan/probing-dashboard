@@ -894,8 +894,7 @@ if __name__ == "__main__":
 
             dbc.Row([
                     dbc.Col(dcc.Dropdown(id='quantity_of_languages'), width=8),
-                    ]),
-            html.Br(),
+                    ], style={'margin-bottom': '3em'}),
             html.Div(id='graphs_for_family')
 
             ], justify="center")
