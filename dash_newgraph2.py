@@ -754,8 +754,8 @@ def update_output(model_name, family, quantity):
                         labels={'X':'Layer number', 'Y': 'Value'}, title=str(category))
             fig1['layout'].update(height=350)
             row = dcc.Graph(figure=fig1)
-            # if len(similar_graphs_for_col) == 0:
-            #     similar_graphs_for_col.append(html.H5('The most similar trends by category:',  style={'font-weight': 'bold'}))
+            if len(similar_graphs_for_col) == 0:
+                similar_graphs_for_col.append(html.H5('The most similar trends by category:',  style={'font-weight': 'bold', 'text-align': 'center'}))
             similar_graphs_for_col.append(row)
     if df_dissimilar_graph2.empty == False:
         for category in df_dissimilar_graph2['Category'].unique().tolist():
@@ -764,8 +764,8 @@ def update_output(model_name, family, quantity):
                         labels={'X':'Layer number', 'Y': 'Value'}, title=str(category))
             fig2['layout'].update(height=350)
             row = dcc.Graph(figure=fig2)
-            # if len(dissimilar_graphs_for_col) == 0:
-            #     dissimilar_graphs_for_col.append(html.H5('The most dissimilar trends by category:', style={'font-weight': 'bold'}))
+            if len(dissimilar_graphs_for_col) == 0:
+                dissimilar_graphs_for_col.append(html.H5('The most dissimilar trends by category:', style={'font-weight': 'bold', 'text-align': 'center'}))
             dissimilar_graphs_for_col.append(row)
     if df_incomparable_graph3.empty == False:
         for category in df_incomparable_graph3['Category'].unique().tolist():
@@ -774,16 +774,21 @@ def update_output(model_name, family, quantity):
                         labels={'X':'Layer number', 'Y': 'Value'}, title=str(category))
             fig3['layout'].update(height=350)
             row = dcc.Graph(figure=fig3)
-            # if len(incomparable_graphs_for_col) == 0:
-            #     incomparable_graphs_for_col.append(html.H5('Comparison is impossible, the number of languages is too small',  style={'font-weight': 'bold'}))
+            if len(incomparable_graphs_for_col) == 0:
+                incomparable_graphs_for_col.append(html.H5('Comparison is impossible, the number of languages is too small',  style={'font-weight': 'bold', 'text-align': 'center'}))
             incomparable_graphs_for_col.append(row)
 
-    graphs_for_div.append(dbc.Col([a for a in similar_graphs_for_col], width=4))
-    graphs_for_div.append(dbc.Col([a for a in dissimilar_graphs_for_col], width=4))
-    graphs_for_div.append(dbc.Col([a for a in incomparable_graphs_for_col], width=4))
+    if len(similar_graphs_for_col) != 0:
+        graphs_for_div.append(dbc.Col([a for a in similar_graphs_for_col], width=4))
+    if len(dissimilar_graphs_for_col) != 0:
+        graphs_for_div.append(dbc.Col([a for a in dissimilar_graphs_for_col], width=4))
+    if len(incomparable_graphs_for_col) != 0:
+        graphs_for_div.append(dbc.Col([a for a in incomparable_graphs_for_col], width=4))
 
     children = [
-                dbc.Col([a for a in graphs_for_div])
+                dbc.Row([
+                    a for a in graphs_for_div
+                ])
                 ]
     graphs = html.Div(children=children)
     return graphs
@@ -890,7 +895,7 @@ if __name__ == "__main__":
             dbc.Row([
                     dbc.Col(dcc.Dropdown(id='quantity_of_languages'), width=8),
                     ]),
-
+            html.Br(),
             html.Div(id='graphs_for_family')
 
             ], justify="center")
