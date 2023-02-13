@@ -744,65 +744,46 @@ def update_output(model_name, family, quantity):
                 else:
                     break
     graphs_for_div = []
+    similar_graphs_for_col = []
+    dissimilar_graphs_for_col = []
+    incomparable_graphs_for_col = []
     if df_similar_graph1.empty == False:
-        rows1 = len(df_similar_graph1['Category'].unique().tolist())
-        height1 = 150*rows1
-        colors_for_graph1 = []
-        for language in df_similar_graph1['Language'].unique().tolist():
-            colors_for_graph1.append(colors_for_legend[language])
-        fig1 = px.line(df_similar_graph1, x='X', y='Y', color='Language', facet_row='Category', title='The most similar trends by category:',
-        labels={'X':'Layer number', 'Y': 'Value'}, color_discrete_sequence=colors_for_graph1)
-        fig1['layout'].update(height=height1)
-        for annotation in fig1['layout']['annotations']: 
-            annotation['textangle']= 0
-            annotation['font']=dict(size = 14)
-            annotation['x'] = 0.001
-            annotation['y'] += 0.02
-        col = dbc.Col([
-                    dcc.Graph(figure=fig1),
-                    ], width=4)
-        graphs_for_div.append(col)
-
+        for category in df_similar_graph1['Category'].unique().tolist():
+            df_temp = df_similar_graph1[df_similar_graph1['Category'].isin([category])]
+            fig1 = px.line(df_temp, x='X', y='Y', color='Language', 
+                        labels={'X':'Layer number', 'Y': 'Value'}, title=str(category))
+            fig1['layout'].update(height=350)
+            row = dcc.Graph(figure=fig1)
+            # if len(similar_graphs_for_col) == 0:
+            #     similar_graphs_for_col.append(html.H5('The most similar trends by category:',  style={'font-weight': 'bold'}))
+            similar_graphs_for_col.append(row)
     if df_dissimilar_graph2.empty == False:
-        rows2 = len(df_dissimilar_graph2['Category'].unique().tolist())
-        height2 = 150*rows2
-        colors_for_graph2 = []
-        for language in df_dissimilar_graph2['Language'].unique().tolist():
-            colors_for_graph2.append(colors_for_legend[language])
-        fig2 = px.line(df_dissimilar_graph2, x='X', y='Y', color='Language', facet_row='Category', title='The most dissimilar trends by category:',
-        labels={'X':'Layer number', 'Y': 'Value'}, color_discrete_sequence=colors_for_graph2)
-        fig2['layout'].update(height=height2)
-        for annotation in fig2['layout']['annotations']: 
-            annotation['textangle']= 0
-            annotation['font']=dict(size = 14)
-            annotation['x'] = 0.001
-            annotation['y'] += 0.02
-        col = dbc.Col([
-                    dcc.Graph(figure=fig2),
-                    ], width=4)
-        graphs_for_div.append(col)
-
+        for category in df_dissimilar_graph2['Category'].unique().tolist():
+            df_temp = df_dissimilar_graph2[df_dissimilar_graph2['Category'].isin([category])]
+            fig2 = px.line(df_temp, x='X', y='Y', color='Language', 
+                        labels={'X':'Layer number', 'Y': 'Value'}, title=str(category))
+            fig2['layout'].update(height=350)
+            row = dcc.Graph(figure=fig2)
+            # if len(dissimilar_graphs_for_col) == 0:
+            #     dissimilar_graphs_for_col.append(html.H5('The most dissimilar trends by category:', style={'font-weight': 'bold'}))
+            dissimilar_graphs_for_col.append(row)
     if df_incomparable_graph3.empty == False:
-        rows3 = len(df_incomparable_graph3['Category'].unique().tolist())
-        height3 = 150*rows3
-        colors_for_graph3 = []
-        for lang in df_incomparable_graph3['Language'].unique().tolist():
-            colors_for_graph3.append(colors_for_legend[lang])
-        fig3 = px.line(df_incomparable_graph3, x='X', y='Y', color='Language', facet_row='Category', title='Comparison is impossible, the number of languages is too small', 
-        labels={'X':'Layer number', 'Y': 'Value'}, color_discrete_sequence=colors_for_graph3)
-        fig3['layout'].update(height=height3)
-        for annotation in fig3['layout']['annotations']: 
-            annotation['textangle']= 0
-            annotation['font']=dict(size = 14)
-            annotation['x'] = 0.001
-            annotation['y'] += 0.014
-        col = dbc.Col([
-                dcc.Graph(figure=fig3),
-                ], width=4)
-        graphs_for_div.append(col)
+        for category in df_incomparable_graph3['Category'].unique().tolist():
+            df_temp = df_incomparable_graph3[df_incomparable_graph3['Category'].isin([category])]
+            fig3 = px.line(df_temp, x='X', y='Y', color='Language', 
+                        labels={'X':'Layer number', 'Y': 'Value'}, title=str(category))
+            fig3['layout'].update(height=350)
+            row = dcc.Graph(figure=fig3)
+            # if len(incomparable_graphs_for_col) == 0:
+            #     incomparable_graphs_for_col.append(html.H5('Comparison is impossible, the number of languages is too small',  style={'font-weight': 'bold'}))
+            incomparable_graphs_for_col.append(row)
+
+    graphs_for_div.append(dbc.Col([a for a in similar_graphs_for_col], width=4))
+    graphs_for_div.append(dbc.Col([a for a in dissimilar_graphs_for_col], width=4))
+    graphs_for_div.append(dbc.Col([a for a in incomparable_graphs_for_col], width=4))
 
     children = [
-                dbc.Row([a for a in graphs_for_div])
+                dbc.Col([a for a in graphs_for_div])
                 ]
     graphs = html.Div(children=children)
     return graphs
@@ -846,15 +827,18 @@ if __name__ == "__main__":
             ]),
                 
             html.Hr(),
-            dcc.Dropdown(
-            options=[
-            {'label': 'number_of_languages', 'value': 'number_of_languages'},
-            {'label': 'number_of_files', 'value': 'number_of_files'}],
-            value = 'number_of_languages',
-            id='parameter_graph1', style={'width': '60%'}),
+            dbc.Row([
+                dbc.Col([
+                    dcc.Dropdown(
+                    options=[
+                    {'label': 'number_of_languages', 'value': 'number_of_languages'},
+                    {'label': 'number_of_files', 'value': 'number_of_files'}],
+                    value = 'number_of_languages',
+                    id='parameter_graph1', style={'width': '60%'})
+                ], width=3)
+            ]),
             dcc.Graph(id='graph1'),
             html.P(id='note_graph1', style={"padding-bottom": "2rem"}),
-
             html.Div(children=[
                 dbc.Row([
                     dbc.Col([
