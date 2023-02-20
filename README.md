@@ -6,4 +6,7 @@
 файл all_languages.csv,
 папка assets,
 папка probing results,
-файл dash_newgraph2.py (сама программа)
+тетрадку data_launch.ipynb
+файл dash_newgraph3.py (сама программа)
+
+Сначала нужно запустить тетрадку data_launch.ipynb, а потом dash_newgraph3.py
