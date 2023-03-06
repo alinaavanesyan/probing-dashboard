@@ -67,6 +67,9 @@ with open('data/size.json', 'r', encoding='utf-8') as f:
 with open('data/full_layers.json', 'r', encoding='utf-8') as f:
     full_layers = json.load(f)
 
+with open('data/middle_values_lang.json', 'r', encoding='utf-8') as f:
+    middle_values_lang = json.load(f)
+
 with open('data/model_name.txt', 'r') as f:
     model_names = [line.rstrip() for line in f]
 
@@ -106,12 +109,15 @@ different_models = [{'label': str(i), 'value': str(i)} for i in model_names]
 def update_output(model_name):
     df_graph1 = pd.DataFrame(list(middle_values[model_name].items()), columns = ['Family', 'Middle'])
     df_graph1['Size'] = size[model_name]['number_of_languages'].values()
-    fig1 = px.scatter(df_graph1,
-    x='Family',
-    y='Middle', 
-    size='Size'
-    )
-    fig1.update_layout(hovermode='x unified')
+    try:
+        fig1 = px.scatter(df_graph1,
+            x='Family',
+            y='Middle', 
+            size='Size'
+        )
+        fig1.update_layout(hovermode='x unified')
+    except:
+        fig1 = go.Figure()
     return fig1
 
 @app.callback(
@@ -148,6 +154,36 @@ def update_output(model_name):
     return card_info
 
 @app.callback(
+    Output(component_id='heatmap1', component_property='figure'),
+    Input(component_id='model_selection', component_property='value'),
+)
+def update_output(model_name):
+    df = pd.DataFrame(columns=['Category', 'Language', 'Value'])
+    for language in middle_values_lang[model_name].keys():
+        for category in middle_values_lang[model_name][language]['f1'].keys():
+            df_temp = {'Category': category, 'Language': language, 'Value': middle_values_lang[model_name][language]['f1'][category]}
+            df_temp = pd.DataFrame([df_temp])
+            df = pd.concat([df, df_temp])
+    fig4 = go.Figure(
+        layout=go.Layout(
+            height=1150,
+            width=1150,
+        )
+    )
+    fig4.add_trace(
+        go.Heatmap(
+        name="Number",
+        y = df['Category'].tolist(),
+        x = df['Language'].tolist(),
+        z = np.array(df['Value'].tolist()),
+        xgap = 2,
+        ygap = 2,
+        colorscale="Magma"
+        )
+    )
+    return fig4
+
+@app.callback(
     [   Output(component_id='dropdown', component_property='options'),
         Output(component_id='dropdown', component_property='value'),
     ],
@@ -177,7 +213,6 @@ def update_output(model_name):
 )
 def update_output(model_name, families):
     df_graph2 = pd.DataFrame(columns = ['Language', 'X', 'Y'])
-    fig2 = go.Figure()
     if isinstance(families, list):
         for family in families:
             layers = middle_all_layers_family[model_name][family]['f1']
@@ -190,7 +225,6 @@ def update_output(model_name, families):
             df['Y'] = y
             frames = [df_graph2, df]
             df_graph2 = pd.concat(frames)
-            fig2 = px.line(df_graph2, x = 'X', y = 'Y', color='Language', labels={'X':'Layer number', 'Y': 'Value'})
     else:
         layers = middle_all_layers_family[model_name][families]['f1']
         x = list(layers.keys())
@@ -202,7 +236,10 @@ def update_output(model_name, families):
         df['Y'] = y
         frames = [df_graph2, df]
         df_graph2 = pd.concat(frames)
+    try:
         fig2 = px.line(df_graph2, x = 'X', y = 'Y', color='Language', labels={'X':'Layer number', 'Y': 'Value'})
+    except:
+        fig2 = go.Figure()
     return fig2
 
 @app.callback(
@@ -228,8 +265,7 @@ def update_output(model_name, category):
     ],
 )
 def update_output(model_name, category, languages):
-    df_graph3 = pd.DataFrame(columns = ['Language', 'x', 'y'])
-    fig3 = go.Figure()
+    df_graph3 = pd.DataFrame(columns = ['Language', 'X', 'Y'])
     if isinstance(languages, list):
         count = -1
         for language in languages:
@@ -241,7 +277,6 @@ def update_output(model_name, category, languages):
             df_temp.pop('Model'); df_temp.pop('Metric')                    
             frames = [df_temp, df_graph3]
             df_graph3 = pd.concat(frames)
-        fig3 = px.line(df_graph3, x = 'X', y = 'Y', color='Language',labels={'X':'Layer number', 'Y': 'Value'})
     else:
         df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
         df_temp = df_temp[df_temp['Language'].isin([languages])]     
@@ -250,8 +285,73 @@ def update_output(model_name, category, languages):
         df_temp.pop('Model'); df_temp.pop('Metric')   
         frames = [df_temp, df_graph3]
         df_graph3 = pd.concat(frames)
-        fig3 = px.line(df_graph3, x = 'X', y = 'Y', color='Language', labels={'X':'Layer number', 'Y': 'Value'})
+    
+    try:
+        fig3 = px.line(df_graph3, x = 'X', y = 'Y', color='Language',labels={'X':'Layer number', 'Y': 'Value'})
+    except:
+        fig3 = go.Figure()
+    
     return fig3
+
+
+@app.callback(
+    [   Output(component_id='language_graph4', component_property='options'),
+        Output(component_id='language_graph4', component_property='value'),
+    ],
+    Input(component_id='model_selection', component_property='value'), 
+)
+def update_output(model_name):
+    list_of_languages = list(all_layers_lang[model_name].keys())
+    return [{'label': str(i), 'value': str(i)} for i in list_of_languages], list_of_languages[0]
+
+
+@app.callback(
+    [   Output(component_id='categories_graph4', component_property='options'),
+        Output(component_id='categories_graph4', component_property='value'),
+    ],
+    [   Input(component_id='model_selection', component_property='value'), 
+        Input(component_id='language_graph4', component_property='value')
+    ],
+)
+def update_output(model_name, language):
+    df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+    df_temp = df_temp[df_temp['Language'].isin([language])]
+    df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+    list_of_categories = df_temp['Category'].unique().tolist()
+    return [{'label': str(i), 'value': str(i)} for i in list_of_categories], list_of_categories[0]
+
+@app.callback(
+    Output(component_id='graph4', component_property='figure'),
+    [   Input(component_id='model_selection', component_property='value'), 
+        Input(component_id='language_graph4', component_property='value'),
+        Input(component_id='categories_graph4', component_property='value'), 
+    ],
+)
+def update_output(model_name, language, categories):
+    df_graph4 = pd.DataFrame(columns = ['Language', 'x', 'y'])    
+    df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+    df_temp = df_temp[df_temp['Language'].isin([language])]     
+    df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+
+    if isinstance(categories, list):
+        for category in categories:
+            df_temp2 = df_temp[df_temp['Category'].isin([category])]
+            df_temp2.pop('Model'); df_temp2.pop('Metric')   
+            frames = [df_temp2, df_graph4]
+            df_graph4 = pd.concat(frames)
+    else:
+        df_temp2 = df_temp[df_temp['Category'].isin([categories])]
+        df_temp2.pop('Model'); df_temp2.pop('Metric')   
+        frames = [df_temp2, df_graph4]
+        df_graph4 = pd.concat(frames)
+    
+    if df_graph4.empty:
+        fig4 = go.Figure()
+    else:
+        fig4 = px.line(df_graph4, x = 'X', y = 'Y', color='Category', labels={'X':'Layer number', 'Y': 'Value'})
+
+    return fig4
+
 
 @app.callback(
     Output(component_id='card1', component_property='children'),
@@ -559,6 +659,49 @@ def update_output(model_name):
                 all_cats.append(category)
     return [{'label': str(i), 'value': str(i)} for i in all_cats], all_cats[0]
 
+@app.callback(
+    [   Output(component_id='category_heatmap2', component_property='options'),
+        Output(component_id='category_heatmap2', component_property='value'),
+    ],
+    Input(component_id='model_selection', component_property='value'), 
+)
+def update_output(model_name):
+    df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+    df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+    list_of_categories = df_temp['Category'].unique().tolist()
+    return [{'label': str(i), 'value': str(i)} for i in list_of_categories], list_of_categories[0]
+
+@app.callback(
+    Output(component_id='heatmap2', component_property='figure'),
+    [
+    Input(component_id='model_selection', component_property='value'),
+    Input(component_id='category_heatmap2', component_property='value'),
+    ]
+)
+def update_output(model_name, category):
+    df_heatmap = df_full_layers[df_full_layers['Model'].isin([model_name])]
+    df_heatmap = df_heatmap[df_heatmap['Category'].isin([category])]
+    df_heatmap = df_heatmap[df_heatmap['Metric'].isin(['f1'])]
+    fig5 = go.Figure(
+        layout=go.Layout(
+        height=1000,
+        )
+    )
+    if category != '':
+        fig5.add_trace(
+            go.Heatmap(
+            name="Number",
+            y = df_heatmap['Language'].tolist(),
+            x = df_heatmap['X'].tolist(),
+            z = np.array(df_heatmap['Y'].tolist()),
+            xgap = 2,
+            ygap = 2,
+            colorscale="Magma"
+            )
+        )
+    return fig5
+
+
 if __name__ == "__main__":  
     app.layout = html.Div(children=[
     dbc.Row([
@@ -617,6 +760,18 @@ if __name__ == "__main__":
             ]),
 
             html.Div(children=[
+                dbc.Row([
+                    dbc.Col([
+                            html.H5('Values for each layer and category (for certain language):', style={'text-align': 'center'}),
+                            dcc.Dropdown(id='language_graph4'), 
+                            dcc.Dropdown(id='categories_graph4', multi=True),
+                            dcc.Graph(id='graph4'),
+                    ], width=6),
+                ], style={"padding-top": "3rem"})
+                                
+            ]),
+
+            html.Div(children=[
                 html.H3('Statistics on language families', style={'text-align': 'center'}),
                 html.Br(),
                 dcc.Dropdown(id='family_selection'),
@@ -646,7 +801,11 @@ if __name__ == "__main__":
             dbc.Row([
                     dbc.Col(dcc.Dropdown(id='quantity_of_languages'), width=8),
                     ], style={'margin-bottom': '3em'}),
-            html.Div(id='graphs_for_family')
+            html.Div(id='graphs_for_family'),
+
+            dcc.Graph(id='heatmap1'),
+            dcc.Dropdown(id='category_heatmap2'),
+            dcc.Graph(id='heatmap2'),
 
             ], justify="center")
                     
