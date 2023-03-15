@@ -1,32 +1,38 @@
-import dash
-from dash import dcc
-from dash import html
-import pandas as pd
-import plotly.express as px
+import collections
 import json
-from glob import glob
-import json
-from multiprocessing import Pool, RLock
-import pandas as pd
+import math
 import multiprocessing as mp
-import seaborn as sn
+import os
+import sys
+import statistics
+from collections import OrderedDict
+from glob import glob
+from multiprocessing import Pool, RLock
+from statistics import mean
+
+import dash
+import dash_bootstrap_components as dbc
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 import plotly.graph_objects as go
-from dash import Dash, dcc, html, Input, Output
 import plotly.graph_objs as go
+import seaborn as sn
+from dash import Dash, Input, Output, dcc, html
 from plotly.subplots import make_subplots
-import dash_bootstrap_components as dbc
-from dash import html
-from statistics import mean
-import math
-from collections import OrderedDict
-import collections
-import statistics
-import os
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+cli_args = sys.argv[1:]
+if cli_args and type(cli_args[0]) == int:
+    PORT = cli_args[0]
+else:
+    PORT = os.getenv("APP_DASHBOARD_PORT")
+    try:
+        PORT = int(PORT)
+    except:
+        PORT = 8050
+
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], url_base_pathname="/dashboard/")
 
 server = app.server
 
@@ -811,4 +817,4 @@ if __name__ == "__main__":
                     
         ], style={"padding": "3rem"})
 
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=PORT, host= '0.0.0.0')
