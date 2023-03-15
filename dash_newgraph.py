@@ -812,4 +812,4 @@ if __name__ == "__main__":
                     
         ], style={"padding": "3rem"})
 
-    app.run_server(debug=True, port=PORT)
+    app.run_server(debug=True, port=PORT, host= '0.0.0.0')
