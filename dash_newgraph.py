@@ -27,7 +27,7 @@ try:
 except:
     PORT = 8050
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], url_base_pathname="/dashboard")
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], url_base_pathname="/dashboard/")
 
 server = app.server
 
