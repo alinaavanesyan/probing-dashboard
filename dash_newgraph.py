@@ -3,6 +3,7 @@ import json
 import math
 import multiprocessing as mp
 import os
+import sys
 import statistics
 from collections import OrderedDict
 from glob import glob
@@ -21,11 +22,15 @@ import seaborn as sn
 from dash import Dash, Input, Output, dcc, html
 from plotly.subplots import make_subplots
 
-PORT = os.getenv("APP_DASHBOARD_PORT")
-try:
-    PORT = int(PORT)
-except:
-    PORT = 8050
+cli_args = sys.argv[1:]
+if cli_args and type(cli_args[0]) == int:
+    PORT = cli_args[0]
+else:
+    PORT = os.getenv("APP_DASHBOARD_PORT")
+    try:
+        PORT = int(PORT)
+    except:
+        PORT = 8050
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], url_base_pathname="/dashboard/")
 
