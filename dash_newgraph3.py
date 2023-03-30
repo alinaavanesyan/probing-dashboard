@@ -70,6 +70,9 @@ with open('data/full_layers.json', 'r', encoding='utf-8') as f:
 with open('data/middle_values_lang.json', 'r', encoding='utf-8') as f:
     middle_values_lang = json.load(f)
 
+with open('data/datasets.json', 'r', encoding='utf-8') as f:
+    datasets = json.load(f)
+
 with open('data/model_name.txt', 'r') as f:
     model_names = [line.rstrip() for line in f]
 
@@ -352,6 +355,110 @@ def update_output(model_name, language, categories):
 
     return fig4
 
+@app.callback(
+    Output(component_id='datasets', component_property='children'),
+    [   Input(component_id='model_selection', component_property='value'), 
+        Input(component_id='language_graph4', component_property='value'),
+        Input(component_id='categories_graph4', component_property='value'), 
+    ],
+)
+def update_output(model_name, language, categories):
+    cards = []
+    if isinstance(categories, list):
+        for category in categories:
+            body_text = []  
+            body_text.append(html.H4(f'{category}')),
+            training = [html.B("Training:")]
+            for key in datasets[model_name][language][category]['training'].keys():
+                training.append(html.P(f"{key} -- {datasets[model_name][language][category]['training'][key]}"))
+            validation = [html.B("Validation:")]
+            for key in datasets[model_name][language][category]['validation'].keys():
+                validation.append(html.P(f"{key} -- {datasets[model_name][language][category]['validation'][key]}"))
+            test = [html.B("Test:")]
+            for key in datasets[model_name][language][category]['test'].keys():
+                test.append(html.P(f"{key} -- {datasets[model_name][language][category]['test'][key]}"))
+            
+            body_text.append(dbc.Col([
+                                    a for a in training
+                                    ])
+            )
+            body_text.append(dbc.Col([
+                                    a for a in validation
+                                    ])
+            )
+            body_text.append(dbc.Col([
+                                    a for a in test
+                                    ])
+            )
+
+            card = dbc.Card(
+                [
+                    dbc.CardBody(
+                        dbc.Row([
+                                a for a in body_text
+                        ])
+                    ),
+                ],
+                body=True,
+                )
+            cards.append(card)
+
+            # for key in datasets[model_name][language][category]['training'].keys():
+            #     body_text.append(f"{key} -- {datasets[model_name][language][category]['training'][key]}")
+            # body_text.append(html.P("Validation:"))
+            # for key in datasets[model_name][language][category]['validation'].keys():
+            #     body_text.append(f"{key} -- {datasets[model_name][language][category]['validation'][key]}")
+            # body_text.append(html.P("Test:"))
+            # for key in datasets[model_name][language][category]['test'].keys():
+            #     body_text.append(f"{key} -- {datasets[model_name][language][category]['test'][key]}")
+
+    else:
+        category = categories
+        body_text = []  
+        body_text.append(html.H4(f'{category}')),
+        training = [html.B("Training:")]
+        for key in datasets[model_name][language][category]['training'].keys():
+            training.append(html.P(f"{key} -- {datasets[model_name][language][category]['training'][key]}"))
+        validation = [html.B("Validation:")]
+        for key in datasets[model_name][language][category]['validation'].keys():
+            validation.append(html.P(f"{key} -- {datasets[model_name][language][category]['validation'][key]}"))
+        test = [html.B("Test:")]
+        for key in datasets[model_name][language][category]['test'].keys():
+            test.append(html.P(f"{key} -- {datasets[model_name][language][category]['test'][key]}"))
+        
+        body_text.append(dbc.Col([
+                                a for a in training
+                                ])
+        )
+        body_text.append(dbc.Col([
+                                a for a in validation
+                                ])
+        )
+        body_text.append(dbc.Col([
+                                a for a in test
+                                ])
+        )
+
+        card = dbc.Card(
+            [
+                dbc.CardBody(
+                    dbc.Row([
+                            a for a in body_text
+                    ])
+                ),
+            ],
+            body=True,
+            )
+        cards.append(card)
+
+    
+    children = [
+            dbc.Row([
+                a for a in cards
+            ])
+    ]
+
+    return children
 
 @app.callback(
     Output(component_id='card1', component_property='children'),
@@ -767,6 +874,9 @@ if __name__ == "__main__":
                             dcc.Dropdown(id='categories_graph4', multi=True),
                             dcc.Graph(id='graph4'),
                     ], width=6),
+                    dbc.Col([
+                        html.Div(id='datasets')
+                    ])
                 ], style={"padding-top": "3rem"})
                                 
             ]),
