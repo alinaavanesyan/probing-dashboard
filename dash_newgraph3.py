@@ -27,7 +27,7 @@ import statistics
 import os
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
-
+# [dbc.themes.MINTY]
 server = app.server
 
 hits = glob("Probing_framework4/results/*/*/*.json", recursive=True)
@@ -36,50 +36,36 @@ lang_file = pd.read_csv('all_languages.csv', delimiter=';')
 
 with open('data/all_categories.json', 'r', encoding='utf-8') as f:
     all_categories = json.load(f)
-
 with open('data/middle_all_layers_family.json', 'r', encoding='utf-8') as f:
     middle_all_layers_family = json.load(f)
-
 with open('data/all_layers_lang.json', 'r', encoding='utf-8') as f:
     all_layers_lang = json.load(f)
-
 with open('data/all_layers_lang_middle.json', 'r', encoding='utf-8') as f:
     all_layers_lang_middle = json.load(f)
-
 with open('data/lang_files.json', 'r', encoding='utf-8') as f:
     lang_files = json.load(f)
-
 with open('data/middle_values.json', 'r', encoding='utf-8') as f:
     middle_values = json.load(f)
-
 with open('data/structure.json', 'r', encoding='utf-8') as f:
     structure = json.load(f)
-
 with open('data/cat_statistics.json', 'r', encoding='utf-8') as f:
     cat_statistics = json.load(f)
-
 with open('data/cat_statistics_for_table.json', 'r', encoding='utf-8') as f:
     cat_statistics_for_table = json.load(f)
-
 with open('data/size.json', 'r', encoding='utf-8') as f:
     size = json.load(f)
-
 with open('data/full_layers.json', 'r', encoding='utf-8') as f:
     full_layers = json.load(f)
-
 with open('data/middle_values_lang.json', 'r', encoding='utf-8') as f:
     middle_values_lang = json.load(f)
-
 with open('data/datasets.json', 'r', encoding='utf-8') as f:
     datasets = json.load(f)
-
 with open('data/model_name.txt', 'r') as f:
     model_names = [line.rstrip() for line in f]
 
 # This method is to calculate the distance formula between two points
 def euc_dist(pt1, pt2):
     return math.sqrt((pt2[0]-pt1[0])*(pt2[0]-pt1[0])+(pt2[1]-pt1[1])*(pt2[1]-pt1[1]))
- 
 # This is the specific process of calculating the Frechet Distance distance, which is calculated recursively
 def _c(ca,i,j,P,Q):
     if ca[i,j] > -1:
@@ -104,6 +90,7 @@ def frechet_distance(P,Q):
 
 df_full_layers = pd.read_csv('data/df_full_layers.csv')
 different_models = [{'label': str(i), 'value': str(i)} for i in model_names]
+boxplot = pd.read_csv('data/boxplot.csv', delimiter=',')
 
 @app.callback(
     Output(component_id='graph1', component_property='figure'),
@@ -581,33 +568,26 @@ def update_output(model_name, family):
     return treemap1
 
 @app.callback(
-    Output('table1', 'figure'),
+    Output('boxplot', 'figure'),
     [   Input(component_id='model_selection', component_property='value'), 
         Input(component_id='family_selection', component_property='value'),
+        Input(component_id='tick', component_property='value'),
     ]
 )
-def update_output(model_name, user_family):
-    df_table1 = pd.DataFrame(columns = ['Language family', 'Category', 'Minimum value', 'Maximum value'])
-    for family in cat_statistics_for_table[model_name].keys():
-        if family == user_family:
-            for category in cat_statistics_for_table[model_name][family].keys():
-                if isinstance(cat_statistics_for_table[model_name][family][category], list):
-                    row = [family, category, cat_statistics_for_table[model_name][family][category][0], cat_statistics_for_table[model_name][family][category][1]]
-                    df_table1.loc[len(df_table1.index)] = row
-                else:
-                    row = [family, category, cat_statistics_for_table[model_name][family][category], cat_statistics_for_table[model_name][family][category]]
-                    df_table1.loc[len(df_table1.index)] = row
-    
-    column1 = df_table1['Category']
-    column2 = df_table1['Minimum value']
-    column3 = df_table1['Maximum value']
 
-    table1 = go.Figure(data=[go.Table(header=dict(values=['Category', 'Minimum value', 'Maximum value']),
-                    cells=dict(values=[column1, column2, column3]))
-                    ])
+def update_output(model_name, user_family, tick):
+    boxplot_for_family = boxplot[boxplot['Model name'].isin([model_name])]
+    boxplot_for_family = boxplot_for_family[boxplot_for_family['Family'].isin([user_family])]
     
-    table1.update_layout(margin=dict(l=20, r=20, t=20, b=20),)
-    return table1
+    if tick:
+        tr1 = px.box(boxplot_for_family, x= 'Category', y='Average value')
+        tr2 = px.scatter(boxplot_for_family, x='Category', y='Average value', color='Language')
+        fig = go.Figure(data=tr1.data + tr2.data)
+    else:
+        tr1 = px.box(boxplot_for_family, x= 'Category', y='Average value')
+        fig = go.Figure(tr1.data)
+
+    return fig
 
 @app.callback(
     [   Output(component_id='quantity_of_languages', component_property='options'),
@@ -620,10 +600,7 @@ def update_output(model_name, user_family):
 )
 def update_output(model_name, family):
     family_structure = structure[model_name][family]
-    if len(family_structure) > 1:
-        quantity = [i for i in range(1, len(family_structure))]
-    else:
-        quantity = [1]
+    numbers = []
     df_spec = pd.DataFrame(columns = ['Language', 'Category', 'X', 'Y'])
     for language in family_structure:
         df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
@@ -635,9 +612,13 @@ def update_output(model_name, family):
     flag = 0
     for category in df_spec['Category'].unique().tolist():
         check = df_spec.loc[df_spec['Category'].isin([category])]
+        numbers.append(len(check['Language'].unique().tolist()))
         if len(check['Language'].unique().tolist()) > 3:
             flag = 1
-            break
+    if len(family_structure) > 1:
+        quantity = [i for i in range(1, max(numbers)+1)]
+    else:
+        quantity = [1]
     if flag == 0:
         style={'display': 'none'}
     else:
@@ -897,11 +878,19 @@ if __name__ == "__main__":
                             dbc.Col([
                                     html.H5('Structure of the language family:', style={'text-align': 'center'}),
                                     dcc.Graph(id='treemap1'),
-                                    ], width=5),
+                                    ], width=4),
                             dbc.Col([
                                     html.H5('Average values by category:', style={'text-align': 'center'}),
-                                    dcc.Graph(id='table1'),
-                                    ], width=7),
+
+                                    dcc.Checklist(
+                                        id='tick',
+                                        options=[{'label': html.Div(['Show languages'], style={'color': 'LightGreen', 'font-size': 14}), 
+                                                'value': 'boxplot_lang'}],
+                                        value=['boxplot_lang'], labelStyle={"display": "flex", "align-items": "center"}
+                                    ),
+                                    dcc.Graph(id='boxplot'),                                 
+                                    
+                            ], width=8),
 
                             ])  
                         ], ),
