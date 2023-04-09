@@ -1,6 +1,6 @@
 # Coursework
 
-Описание переменных файла dash_newgraph2.py: https://docs.google.com/document/d/1xtvCqSjs6RUEKgqgWT3gQ9PPWrgJPUuiddiEPSr_uuI/edit
+Описание переменных файла dash_app.py: https://docs.google.com/document/d/1xtvCqSjs6RUEKgqgWT3gQ9PPWrgJPUuiddiEPSr_uuI/edit
 
 Для запуска программы нужно поместить следующие штуки в одну папку:
 - файлы *all_languages.csv* и *genealogy.csv*,
