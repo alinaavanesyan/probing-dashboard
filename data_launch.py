@@ -264,11 +264,11 @@ for model_name in all_layers_lang.keys():
                 number_of_layers = len(all_layers_lang[model_name][language][metric][category].keys())
                 all_layers_lang_middle[model_name][language][metric] = {}
                 for b in range(number_of_layers):
-                    if b not in all_layers_lang_middle[model_name][language].keys():
+                    if b not in all_layers_lang_middle[model_name][language][metric].keys():
                         all_layers_lang_middle[model_name][language][metric][b] = 0
                     all_layers_lang_middle[model_name][language][metric][b] += all_layers_lang[model_name][language][metric][category][b]
             
-            for b in range(number_of_categories):
+            for b in range(number_of_layers):
                 all_layers_lang_middle[model_name][language][metric][b] = round(all_layers_lang_middle[model_name][language][metric][b]/number_of_categories, 3)
 with open('data/all_layers_lang_middle.json', 'w', encoding='utf-8') as f:
     json.dump(all_layers_lang_middle, f, ensure_ascii=False, indent=4)
