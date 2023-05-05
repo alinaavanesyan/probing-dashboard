@@ -118,8 +118,6 @@ for file_name in hits:
             count_occurrences[model_name][family] += 1
 with open('data/all_categories.json', 'w', encoding='utf-8') as f:
     json.dump(all_categories, f, ensure_ascii=False, indent=4)
-with open('data/middle_all_layers_family.json', 'w', encoding='utf-8') as f:
-    json.dump(middle_all_layers_family, f, ensure_ascii=False, indent=4)
 with open('data/all_layers_lang.json', 'w', encoding='utf-8') as f:
     json.dump(all_layers_lang, f, ensure_ascii=False, indent=4)
 with open('data/lang_files.json', 'w', encoding='utf-8') as f:
@@ -179,6 +177,8 @@ for model_name in middle_all_layers_family.keys():
             middle_all_layers_family[model_name][family]["f1"][el] = round(middle_all_layers_family[model_name][family]["f1"][el]/count_occurrences[model_name][family], 3)
         for el in middle_all_layers_family[model_name][family]['accuracy'].keys():
             middle_all_layers_family[model_name][family]['accuracy'][el] = round(middle_all_layers_family[model_name][family]['accuracy'][el]/count_occurrences[model_name][family], 3)
+with open('data/middle_all_layers_family.json', 'w', encoding='utf-8') as f:
+    json.dump(middle_all_layers_family, f, ensure_ascii=False, indent=4)
 with open('data/structure.json', 'w', encoding='utf-8') as f:
     json.dump(structure, f, ensure_ascii=False, indent=4)
 
