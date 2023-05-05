@@ -268,7 +268,7 @@ def update_output(model_name):
     Input(component_id='model_selection', component_property='value'), 
 )
 def update_output(model_name):
-    list_of_families = list(structure[model_name].keys())
+    list_of_families = sorted(list(structure[model_name].keys()))
     return [{'label': str(i), 'value': str(i)} for i in list_of_families], list_of_families[0]
 
 @app.callback(
@@ -336,10 +336,15 @@ def update_output(model_name, families):
     ],
 )
 def update_output(model_name, category):
-    df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
-    df_temp = df_temp[df_temp['Category'].isin([category])]
-    df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
-    list_of_languages = df_temp['Language'].unique().tolist()
+    if category:
+        df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+        df_temp = df_temp[df_temp['Category'].isin([category])]
+        df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+        list_of_languages = df_temp['Language'].unique().tolist()
+    else:
+        df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+        df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+        list_of_languages = df_temp['Language'].unique().tolist()
     return [{'label': str(i), 'value': str(i)} for i in list_of_languages], list_of_languages[0]
 
 @app.callback(
@@ -352,29 +357,31 @@ def update_output(model_name, category):
 )
 def update_output(model_name, category, languages):
     df_graph3 = pd.DataFrame(columns = ['Language', 'X', 'Y'])
-    if isinstance(languages, list):
-        count = -1
-        for language in languages:
-            count += 1
+    if category:
+        if isinstance(languages, list):
+            count = -1
+            for language in languages:
+                count += 1
+                df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+                df_temp = df_temp[df_temp['Language'].isin([language])]  
+                df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+                df_temp = df_temp[df_temp['Category'].isin([category])]   
+                df_temp.pop('Model'); df_temp.pop('Metric')                    
+                frames = [df_temp, df_graph3]
+                df_graph3 = pd.concat(frames)
+        else:
             df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
-            df_temp = df_temp[df_temp['Language'].isin([language])]  
+            df_temp = df_temp[df_temp['Language'].isin([languages])]     
             df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
-            df_temp = df_temp[df_temp['Category'].isin([category])]   
-            df_temp.pop('Model'); df_temp.pop('Metric')                    
+            df_temp = df_temp[df_temp['Category'].isin([category])]
+            df_temp.pop('Model'); df_temp.pop('Metric')   
             frames = [df_temp, df_graph3]
             df_graph3 = pd.concat(frames)
+        try:
+            fig3 = px.line(df_graph3, x = 'X', y = 'Y', color='Language',labels={'X':'Layer number', 'Y': 'Value'})
+        except:
+            fig3 = go.Figure()
     else:
-        df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
-        df_temp = df_temp[df_temp['Language'].isin([languages])]     
-        df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
-        df_temp = df_temp[df_temp['Category'].isin([category])]
-        df_temp.pop('Model'); df_temp.pop('Metric')   
-        frames = [df_temp, df_graph3]
-        df_graph3 = pd.concat(frames)
-    
-    try:
-        fig3 = px.line(df_graph3, x = 'X', y = 'Y', color='Language',labels={'X':'Layer number', 'Y': 'Value'})
-    except:
         fig3 = go.Figure()
     fig3.update_layout({'paper_bgcolor': 'rgba(0,0,0,0)'
     })
@@ -388,9 +395,8 @@ def update_output(model_name, category, languages):
     Input(component_id='model_selection', component_property='value'), 
 )
 def update_output(model_name):
-    list_of_languages = list(all_layers_lang[model_name].keys())
+    list_of_languages = sorted(list(all_layers_lang[model_name].keys()))
     return [{'label': str(i), 'value': str(i)} for i in list_of_languages], list_of_languages[0]
-
 
 @app.callback(
     [   
@@ -403,10 +409,15 @@ def update_output(model_name):
     ],
 )
 def update_output(model_name, language):
-    df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
-    df_temp = df_temp[df_temp['Language'].isin([language])]
-    df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
-    list_of_categories = df_temp['Category'].unique().tolist()
+    if language:
+        df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+        df_temp = df_temp[df_temp['Language'].isin([language])]
+        df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+        list_of_categories = df_temp['Category'].unique().tolist()
+    else:
+        df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+        df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+        list_of_categories = df_temp['Category'].unique().tolist()        
     return [{'label': str(i), 'value': str(i)} for i in list_of_categories], list_of_categories[0]
 
 @app.callback(
@@ -418,23 +429,23 @@ def update_output(model_name, language):
     ],
 )
 def update_output(model_name, language, categories):
-    df_graph4 = pd.DataFrame(columns = ['Language', 'x', 'y'])    
-    df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
-    df_temp = df_temp[df_temp['Language'].isin([language])]     
-    df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+    df_graph4 = pd.DataFrame(columns = ['Language', 'x', 'y'])
+    if language:    
+        df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
+        df_temp = df_temp[df_temp['Language'].isin([language])]     
+        df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
 
-    if isinstance(categories, list):
-        for category in categories:
-            df_temp2 = df_temp[df_temp['Category'].isin([category])]
+        if isinstance(categories, list):
+            for category in categories:
+                df_temp2 = df_temp[df_temp['Category'].isin([category])]
+                df_temp2.pop('Model'); df_temp2.pop('Metric')   
+                frames = [df_temp2, df_graph4]
+                df_graph4 = pd.concat(frames)
+        else:
+            df_temp2 = df_temp[df_temp['Category'].isin([categories])]
             df_temp2.pop('Model'); df_temp2.pop('Metric')   
             frames = [df_temp2, df_graph4]
             df_graph4 = pd.concat(frames)
-    else:
-        df_temp2 = df_temp[df_temp['Category'].isin([categories])]
-        df_temp2.pop('Model'); df_temp2.pop('Metric')   
-        frames = [df_temp2, df_graph4]
-        df_graph4 = pd.concat(frames)
-    
     if df_graph4.empty:
         fig4 = go.Figure()
     else:
@@ -452,10 +463,52 @@ def update_output(model_name, language, categories):
 )
 def update_output(model_name, language, categories):
     cards = []
-    if isinstance(categories, list):
-        for category in categories:
+    if language:
+        if isinstance(categories, list):
+            for category in categories:
+                body_text = []  
+                body_text.append(html.H4(f'{category}', style={'font-weight': 'bold'})),
+                training = [html.B("Training:")]
+                for key in datasets[model_name][language][category]['training'].keys():
+                    training.append(html.P(f"{key} — {datasets[model_name][language][category]['training'][key]}"))
+                validation = [html.B("Validation:")]
+                for key in datasets[model_name][language][category]['validation'].keys():
+                    validation.append(html.P(f"{key} — {datasets[model_name][language][category]['validation'][key]}"))
+                test = [html.B("Test:")]
+                for key in datasets[model_name][language][category]['test'].keys():
+                    test.append(html.P(f"{key} — {datasets[model_name][language][category]['test'][key]}"))
+                
+                body_text.append(dbc.Col([
+                                        a for a in training
+                                        ])
+                )
+                body_text.append(dbc.Col([
+                                        a for a in validation
+                                        ])
+                )
+                body_text.append(dbc.Col([
+                                        a for a in test
+                                        ])
+                )
+
+                card = dbc.Card(
+                    [
+                        dbc.CardBody(
+                            dbc.Row([
+                                    a for a in body_text
+                            ])
+                        ),
+                    ],
+                    className='bg-transparent',
+                    style={'color': 'black'},
+                    body=True,
+                )
+                cards.append(card)
+
+        else:
+            category = categories
             body_text = []  
-            body_text.append(html.H4(f'{category}', style={'font-weight': 'bold'})),
+            body_text.append(html.H4(f'{category}', style={'font-weight': 'bold'}))
             training = [html.B("Training:")]
             for key in datasets[model_name][language][category]['training'].keys():
                 training.append(html.P(f"{key} — {datasets[model_name][language][category]['training'][key]}"))
@@ -480,7 +533,7 @@ def update_output(model_name, language, categories):
             )
 
             card = dbc.Card(
-                [
+                [   
                     dbc.CardBody(
                         dbc.Row([
                                 a for a in body_text
@@ -492,52 +545,17 @@ def update_output(model_name, language, categories):
                 body=True,
             )
             cards.append(card)
-
     else:
-        category = categories
-        body_text = []  
-        body_text.append(html.H4(f'{category}', style={'font-weight': 'bold'}))
-        training = [html.B("Training:")]
-        for key in datasets[model_name][language][category]['training'].keys():
-            training.append(html.P(f"{key} — {datasets[model_name][language][category]['training'][key]}"))
-        validation = [html.B("Validation:")]
-        for key in datasets[model_name][language][category]['validation'].keys():
-            validation.append(html.P(f"{key} — {datasets[model_name][language][category]['validation'][key]}"))
-        test = [html.B("Test:")]
-        for key in datasets[model_name][language][category]['test'].keys():
-            test.append(html.P(f"{key} — {datasets[model_name][language][category]['test'][key]}"))
-        
-        body_text.append(dbc.Col([
-                                a for a in training
-                                ])
-        )
-        body_text.append(dbc.Col([
-                                a for a in validation
-                                ])
-        )
-        body_text.append(dbc.Col([
-                                a for a in test
-                                ])
-        )
-
         card = dbc.Card(
-            [   
-                dbc.CardBody(
-                    dbc.Row([
-                            a for a in body_text
-                    ])
-                ),
-            ],
             className='bg-transparent',
             style={'color': 'black'},
             body=True,
         )
         cards.append(card)
-    
     children = [
-            dbc.Row([
-                a for a in cards
-            ])
+                dbc.Row([
+                    a for a in cards
+                ])
     ]
     return children
 
@@ -550,6 +568,11 @@ def update_output(model_name, language, categories):
 )
 def update_output(model_name, family):
     languages = []
+    if not family:
+        list_of_families = list(structure[model_name].keys())
+        if '[Basque]*' in list_of_families:
+            list_of_families.remove('[Basque]*')
+        family = sorted(list_of_families)[0]
     for language in structure[model_name][family]:
         try:
             code = lang_file.loc[lang_file['Language'].isin([language])]
@@ -577,9 +600,17 @@ def update_output(model_name, family):
 
 @app.callback(
     Output('card2', 'children'),
-    Input('model_selection', 'value'), Input('family_selection', 'value')
+    [
+        Input('model_selection', 'value'),
+        Input('family_selection', 'value')
+    ]
 )
 def update_output(model_name, family):
+    if not family:
+        list_of_families = list(structure[model_name].keys())
+        if '[Basque]*' in list_of_families:
+            list_of_families.remove('[Basque]*')
+        family = sorted(list_of_families)[0]
     min_count = 0
     min_count = min(all_categories[model_name][family]['f1'].items(), key=lambda x: x[1])
     card2 = dbc.Card(
@@ -605,6 +636,11 @@ def update_output(model_name, family):
     ]
 )
 def update_output(model_name, family):
+    if not family:
+        list_of_families = list(structure[model_name].keys())
+        if '[Basque]*' in list_of_families:
+            list_of_families.remove('[Basque]*')
+        family = sorted(list_of_families)[0]
     max_count = 0
     max_count = max(all_categories[model_name][family]['f1'].items(), key=lambda x: x[1])
     card3 = dbc.Card(
@@ -630,6 +666,11 @@ def update_output(model_name, family):
     ]
 )
 def update_output(model_name, family):
+    if not family:
+        list_of_families = list(structure[model_name].keys())
+        if '[Basque]*' in list_of_families:
+            list_of_families.remove('[Basque]*')
+        family = sorted(list_of_families)[0]
     labels = []
     labels.append(family)
     parents = []
@@ -637,14 +678,12 @@ def update_output(model_name, family):
     values = []
     values.append(0)
     for language in structure[model_name][family]:
+        code = lang_file.loc[lang_file['Language'].isin([language])]
+        code = code.iloc[0]['Codes']
         try:
+            count = len(lang_files[model_name][family][code])
             labels.append(language)
             parents.append(family)
-
-            code = lang_file.loc[lang_file['Language'].isin([language])]
-            code = code.iloc[0]['Codes']
-            
-            count = len(lang_files[model_name][family][code])
             values.append(count)
         except:
             value = f'The language {language} is part of the language family, but is not represented in the files with the results of probing'
@@ -672,10 +711,15 @@ def update_output(model_name, family):
 )
 
 def update_output(model_name, user_family, tick):
+    if not user_family:
+        list_of_families = list(structure[model_name].keys())
+        if '[Basque]*' in list_of_families:
+            list_of_families.remove('[Basque]*')
+        user_family = sorted(list_of_families)[0]
     boxplot_for_family = boxplot[boxplot['Model name'].isin([model_name])]
     boxplot_for_family = boxplot_for_family[boxplot_for_family['Family'].isin([user_family])]
     x = "{}".format(tick)
-    if x == 'True' :
+    if x == 'True':
         tr1 = px.box(boxplot_for_family, x= 'Category', y='Average value')
         tr2 = px.scatter(boxplot_for_family, x='Category', y='Average value', color='Language')
         fig = go.Figure(data=tr1.data + tr2.data)
@@ -697,6 +741,11 @@ def update_output(model_name, user_family, tick):
     ],
 )
 def update_output(model_name, family):
+    if not family:
+        list_of_families = list(structure[model_name].keys())
+        if '[Basque]*' in list_of_families:
+            list_of_families.remove('[Basque]*')
+        family = sorted(list_of_families)[0]
     family_structure = structure[model_name][family]
     numbers = []
     df_spec = pd.DataFrame(columns = ['Language', 'Category', 'X', 'Y'])
@@ -732,6 +781,11 @@ def update_output(model_name, family):
     ],
 )
 def update_output(model_name, family, quantity):
+    if not family:
+        list_of_families = list(structure[model_name].keys())
+        if '[Basque]*' in list_of_families:
+            list_of_families.remove('[Basque]*')
+        family = sorted(list_of_families)[0]
     df_similar_graph1 = pd.DataFrame(columns = ['Language', 'Category', 'X', 'Y'])
     df_dissimilar_graph2 = pd.DataFrame(columns = ['Language', 'Category', 'X', 'Y'])
     model_name_new =  model_name.replace('/', '%')
