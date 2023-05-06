@@ -62,6 +62,7 @@ with open('data/datasets.json', 'r', encoding='utf-8') as f:
     datasets = json.load(f)
 with open('data/model_name.txt', 'r') as f:
     model_names = [line.rstrip() for line in f]
+    model_names = sorted(model_names)
 with open('data/middle_for_each_cat.json', 'r', encoding='utf-8') as f:
     middle_for_each_cat = json.load(f)
 
@@ -413,11 +414,11 @@ def update_output(model_name, language):
         df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
         df_temp = df_temp[df_temp['Language'].isin([language])]
         df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
-        list_of_categories = df_temp['Category'].unique().tolist()
+        list_of_categories = sorted(df_temp['Category'].unique().tolist())
     else:
         df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
         df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
-        list_of_categories = df_temp['Category'].unique().tolist()        
+        list_of_categories = sorted(df_temp['Category'].unique().tolist())      
     return [{'label': str(i), 'value': str(i)} for i in list_of_categories], list_of_categories[0]
 
 @app.callback(
@@ -918,7 +919,7 @@ def update_output(model_name):
 def update_output(model_name):
     df_temp = df_full_layers[df_full_layers['Model'].isin([model_name])]
     df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
-    list_of_categories = df_temp['Category'].unique().tolist()
+    list_of_categories = sorted(df_temp['Category'].unique().tolist())
     return [{'label': str(i), 'value': str(i)} for i in list_of_categories], list_of_categories[0]
 
 @app.callback(
