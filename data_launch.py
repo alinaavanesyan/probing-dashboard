@@ -25,8 +25,25 @@ from collections import OrderedDict
 import collections
 import statistics
 import os
+import datetime
 
 hits = glob('Probing_framework/results/*/*/*.json', recursive=True)
+dict_hits = {}
+for file in hits:
+    others = []
+    try:
+        if 'PM' or 'AM' in file.split("\\")[2]:
+            dict_hits[file] = file.split("\\")[2][:19]
+    except:
+        others.append(file)
+for ts in dict_hits.values():
+    try:
+       datetime.datetime.strptime(ts, "%Y_%m_%d-%H_%M_%S")
+    except:
+        error = 'Wrong format'
+dict_hits = dict(sorted(dict_hits.items(), key=lambda item: item[1], reverse=True))
+hits = list(dict_hits.keys()) + others
+
 lang_file = pd.read_csv('all_languages.csv', delimiter=';')
 if not os.path.exists('data'):
     os.makedirs('data')
@@ -86,12 +103,12 @@ for file_name in hits:
         all_layers_lang[model_name][lang_full] = {}
         all_layers_lang[model_name][lang_full]['f1'] = {}
         all_layers_lang[model_name][lang_full]['accuracy'] = {}
-    if cat not in all_layers_lang[model_name][lang_full]['f1'].keys():
-        all_layers_lang[model_name][lang_full]['f1'][cat] = {}
-        all_layers_lang[model_name][lang_full]['accuracy'][cat] = {}
     number_of_layers = len(data_file['results']['test_score']['f1'].keys())
     middle_value_for_language_f1 = 0
     middle_value_for_language_acc = 0
+    if cat not in all_layers_lang[model_name][lang_full]['f1'].keys():
+        all_layers_lang[model_name][lang_full]['f1'][cat] = {}
+        all_layers_lang[model_name][lang_full]['accuracy'][cat] = {}
     for b in range(0,number_of_layers):
         middle_value_for_language_f1 += data_file['results']['test_score']['f1'][str(b)][0]
         middle_value_for_language_acc += data_file['results']['test_score']['accuracy'][str(b)][0]
@@ -278,7 +295,7 @@ full_layers = {}
 for file_name in hits: 
     file = open(file_name)
     data_file = json.loads(file.read())
-    lang = data_file["params"]["task_language"]
+    lang = data_file['params']['task_language']
     lang_full_name = lang_file.loc[lang_file['Codes'].isin([lang])]
     lang_full_name = lang_full_name.iloc[0]['Language']
     category = data_file['params']['task_category']
@@ -294,8 +311,8 @@ for file_name in hits:
     for metric in full_layers[model_name][lang_full_name].keys():
         if category not in full_layers[model_name][lang_full_name][metric].keys():
             full_layers[model_name][lang_full_name][metric][category] = {}
-        for b in range(number_of_layers):
-            full_layers[model_name][lang_full_name][metric][category][b] = round(data_file['results']['test_score'][str(metric)][str(b)][0], 3)
+            for b in range(number_of_layers):
+                full_layers[model_name][lang_full_name][metric][category][b] = round(data_file['results']['test_score'][str(metric)][str(b)][0], 3)
 with open('data/full_layers.json', 'w', encoding='utf-8') as f:
     json.dump(full_layers, f, ensure_ascii=False, indent=4)
 
