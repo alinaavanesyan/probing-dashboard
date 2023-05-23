@@ -491,3 +491,32 @@ for model_name in middle_for_each_cat.keys():
         middle_for_each_cat[model_name][key] = round(middle_for_each_cat[model_name][key][1] / middle_for_each_cat[model_name][key][0], 3)
 with open('data/middle_for_each_cat.json', 'w', encoding='utf-8') as f:
     json.dump(middle_for_each_cat, f, ensure_ascii=False, indent=4)
+
+layers_middle = {}
+for model in df_full_layers['Model'].unique():
+    layers_middle[model] = {}
+    df_temp = df_full_layers[df_full_layers['Model'].isin([model])]
+    df_temp = df_temp[df_temp['Metric'].isin(['f1'])]
+    for layer in df_temp['X'].unique():
+        df_temp2 = df_temp[df_temp['X'].isin([layer])]
+        layers_middle[model][layer] = round(sum(df_temp2['Y'])/len(df_temp2['Y']), 3)
+df_layers_middle = pd.DataFrame(columns = ['Model', 'Layer', 'Average value'])
+for model in layers_middle.keys():
+    for layer in layers_middle[model].keys():
+        temp = {
+            'Model': model,
+            'Layer': str(int(layer)+1),
+            'Average value': layers_middle[model][layer]
+        }
+        frames = [df_layers_middle, pd.DataFrame(temp, index=[0])]
+        df_layers_middle = pd.concat(frames)
+df_layers_middle.to_csv('data/layers_middle.csv')
+
+lang_middle = {}
+for model in middle_values_lang.keys():
+    lang_middle[model] = {}
+    for language in middle_values_lang[model]:
+        lang_middle[model][language] = round(sum(middle_values_lang[model][language]['f1'].values())/len(middle_values_lang[model][language]['f1'].values()), 3)
+    lang_middle[model] = dict(sorted(lang_middle[model].items(), key=lambda item: item[1], reverse=True))
+with open('data/lang_middle.json', 'w', encoding='utf-8') as f:
+    json.dump(lang_middle, f, ensure_ascii=False, indent=4)
