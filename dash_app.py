@@ -295,8 +295,7 @@ def update_output(model_name):
     df = df.sort_values('Category', ascending=False)
     fig4 = go.Figure(
         layout=go.Layout(
-            height=1150,
-            width=1150,
+            height=1200,
         )
     )
     fig4.add_trace(
@@ -1217,11 +1216,9 @@ if __name__ == "__main__":
                         ], style={'margin-bottom': '3em', 'box-shadow': '0 2px 3.5px rgba(0, 0, 0, .2)', 'padding-top': '2rem', 'border-radius': '4px', 'margin-top': '2rem', 'margin-bottom': '2rem', 'background-color': '#ffffff'}),
                 
                 html.Div(children=[
-                    dbc.Row([
-                        html.H4('Average values for each "category-language" pair', style={'text-align': 'center', 'font-weight': 'bold'}, className='text-center'),
-                        html.P('graph 11', style={'font-style': 'italic'}, className='text-center'),
-                        dcc.Graph(id='heatmap1'),
-                    ], justify='center')
+                    html.H4('Average values for each "category-language" pair', style={'text-align': 'center', 'font-weight': 'bold'}, className='text-center'),
+                    html.P('graph 11', style={'font-style': 'italic'}, className='text-center'),
+                    dcc.Graph(id='heatmap1'),
                 ], style={'align': 'center', 'justify': 'center', 'box-shadow': '0 2px 3.5px rgba(0, 0, 0, .2)', 'padding-top': '2rem', 'padding-bottom': '2rem', 'border-radius': '4px', 'margin-top': '2rem', 'background-color': '#ffffff'}),
 
                 html.Div(children=[
