@@ -65,6 +65,8 @@ with open('data/model_name.txt', 'r') as f:
     model_names = sorted(model_names)
 with open('data/middle_for_each_cat.json', 'r', encoding='utf-8') as f:
     middle_for_each_cat = json.load(f)
+with open('data/lang_middle.json', 'r', encoding='utf-8') as f:
+    lang_middle = json.load(f)
 
 # This method is to calculate the distance formula between two points
 def euc_dist(pt1, pt2):
@@ -95,7 +97,12 @@ df_full_layers = pd.read_csv('data/df_full_layers.csv')
 different_models = [{'label': str(i), 'value': str(i)} for i in model_names]
 boxplot = pd.read_csv('data/boxplot.csv', delimiter=',')
 genealogy = pd.read_csv('genealogy.csv', delimiter=',')
+df_layers_middle = pd.read_csv('data/layers_middle.csv')
 languages_for_map = [{'label': str(i), 'value': str(i)} for i in genealogy['language'].tolist()]
+with open('manual.txt', 'r', encoding='utf-8') as f:
+    manual = [line.rstrip() for line in f]
+manual = [i for i in manual if i != '']
+manual = '\n'.join(map(str, manual))
 
 @app.callback(
     Output("modal", "is_open"),
@@ -179,17 +186,23 @@ def update_output(language):
     Input(component_id='model_selection', component_property='value')
 )
 def update_output(model_name):
-    df = pd.DataFrame({'Category': middle_for_each_cat[model_name].keys(), 'Middle value': middle_for_each_cat[model_name].values()})
-    fig1 = px.bar(df, x='Middle value', y='Category', orientation="h", height=750)
+    df = pd.DataFrame({'Category': middle_for_each_cat[model_name].keys(), 'Mean value': middle_for_each_cat[model_name].values()})
+    fig1 = px.bar(df, x='Mean value', y='Category', orientation="h", height=750)
     fig1.update_layout(showlegend=False)
     fig1.update_layout(yaxis={'categoryorder':'total ascending'})
 
-    df_graph2 = pd.DataFrame(list(middle_values[model_name].items()), columns = ['Family', 'Middle'])
-    df_graph2['Size'] = size[model_name]['number_of_languages'].values()
+    df_graph2 = pd.DataFrame(sorted(list(middle_values[model_name].items())), columns = ['Family', 'Mean value'])
+    sizes = []
+    for family in df_graph2['Family']:
+        if family == '[Basque]*':
+            sizes.append(size[model_name]['number_of_languages']['-'])
+        else:
+            sizes.append(size[model_name]['number_of_languages'][family])
+    df_graph2['Size'] = sizes
     try:
         fig2 = px.scatter(df_graph2,
             x='Family',
-            y='Middle', 
+            y='Mean value', 
             size='Size'
         )
         fig2.update_layout(hovermode='x unified')
@@ -229,6 +242,44 @@ def update_output(model_name):
         className="border-0 bg-transparent"
     )
     return card_info
+
+@app.callback(
+    Output(component_id='graph11', component_property='figure'),
+    Input(component_id='model_selection', component_property='value'),
+)
+def update_output(model_name):
+    df_temp = df_layers_middle[df_layers_middle['Model'].isin([model_name])]
+    tr1 = px.bar(df_temp, x='Layer', y='Average value', text_auto=True, title=model_name)
+    tr1['layout'].update(yaxis_range=[0,1])
+    tr1.update_traces(marker_color='rgb(31, 58, 193)')
+    df = df_full_layers[df_full_layers['Model'].isin([model_name])]
+    df = df[df['Metric'].isin(['f1'])]
+    df['X'] = df['X'] + 1
+    tr2 = px.box(df, x= 'X', y='Y')
+    tr2.update_traces(marker_color='rgb(133, 150, 232)')
+    fig = go.Figure(data=tr1.data + tr2.data)
+    if len(df_temp['Layer'].tolist()) < 30:
+        fig.update_layout(
+            xaxis = dict(tickmode = 'linear', dtick = 1),
+        )
+    return fig
+
+@app.callback(
+    Output(component_id='graph12', component_property='figure'),
+    Input(component_id='model_selection', component_property='value'),
+)
+def update_output(model_name):
+    df = pd.DataFrame(columns=['Language', 'Value'])
+    df['Language'] = lang_middle[model_name].keys()
+    df['Value'] = lang_middle[model_name].values()
+    tr1 = px.bar(df, x='Language', y='Value', text_auto=True, title=model_name)
+    tr1['layout'].update(yaxis_range=[0,1])
+    tr1.update_traces(marker_color='rgb(126, 63, 175)')
+    boxplot_for_family = boxplot[boxplot['Model name'].isin([model_name])]
+    tr2 = px.box(boxplot_for_family, x= 'Language', y='Average value')
+    tr2.update_traces(marker_color='rgb(148, 109, 255)')
+    fig = go.Figure(data=tr1.data + tr2.data)
+    return fig
 
 @app.callback(
     Output(component_id='heatmap1', component_property='figure'),
@@ -470,15 +521,18 @@ def update_output(model_name, language, categories):
                 body_text = []  
                 body_text.append(html.H4(f'{category}', style={'font-weight': 'bold'})),
                 training = [html.B("Training:")]
+                dataset_size = int()
                 for key in datasets[model_name][language][category]['training'].keys():
                     training.append(html.P(f"{key} — {datasets[model_name][language][category]['training'][key]}"))
+                    dataset_size += int(datasets[model_name][language][category]['training'][key])
                 validation = [html.B("Validation:")]
                 for key in datasets[model_name][language][category]['validation'].keys():
                     validation.append(html.P(f"{key} — {datasets[model_name][language][category]['validation'][key]}"))
+                    dataset_size += int(datasets[model_name][language][category]['validation'][key])
                 test = [html.B("Test:")]
                 for key in datasets[model_name][language][category]['test'].keys():
                     test.append(html.P(f"{key} — {datasets[model_name][language][category]['test'][key]}"))
-                
+                    dataset_size += int(datasets[model_name][language][category]['test'][key])
                 body_text.append(dbc.Col([
                                         a for a in training
                                         ])
@@ -494,11 +548,15 @@ def update_output(model_name, language, categories):
 
                 card = dbc.Card(
                     [
-                        dbc.CardBody(
+                        dbc.CardBody([
                             dbc.Row([
                                     a for a in body_text
-                            ])
-                        ),
+                            ]),
+                            html.Div([
+                                html.B('In total:'),
+                                html.P(f'{dataset_size}')
+                            ]),
+                        ]),
                     ],
                     className='bg-transparent',
                     style={'color': 'black'},
@@ -511,14 +569,18 @@ def update_output(model_name, language, categories):
             body_text = []  
             body_text.append(html.H4(f'{category}', style={'font-weight': 'bold'}))
             training = [html.B("Training:")]
+            dataset_size = int()
             for key in datasets[model_name][language][category]['training'].keys():
                 training.append(html.P(f"{key} — {datasets[model_name][language][category]['training'][key]}"))
+                dataset_size += int(datasets[model_name][language][category]['training'][key])
             validation = [html.B("Validation:")]
             for key in datasets[model_name][language][category]['validation'].keys():
                 validation.append(html.P(f"{key} — {datasets[model_name][language][category]['validation'][key]}"))
+                dataset_size += int(datasets[model_name][language][category]['validation'][key])
             test = [html.B("Test:")]
             for key in datasets[model_name][language][category]['test'].keys():
                 test.append(html.P(f"{key} — {datasets[model_name][language][category]['test'][key]}"))
+                dataset_size += int(datasets[model_name][language][category]['test'][key])
             
             body_text.append(dbc.Col([
                                     a for a in training
@@ -535,11 +597,15 @@ def update_output(model_name, language, categories):
 
             card = dbc.Card(
                 [   
-                    dbc.CardBody(
+                    dbc.CardBody([
                         dbc.Row([
                                 a for a in body_text
-                        ])
-                    ),
+                        ]),
+                        html.Div([
+                            html.B('In total:'),
+                            html.P(f'{dataset_size}')
+                        ]),
+                    ]),
                 ],
                 className='bg-transparent',
                 style={'color': 'black'},
@@ -951,6 +1017,9 @@ def update_output(model_name, category):
             colorscale="Magma"
             )
         )
+    fig5.update_layout(
+        xaxis = dict(tickmode = 'linear', dtick = 1),
+    )
     return fig5
 
 
@@ -978,7 +1047,7 @@ if __name__ == "__main__":
                                     dbc.Modal(
                                         [
                                             dbc.ModalHeader(dbc.ModalTitle('Manual')),
-                                            dbc.ModalBody('Here is the manual'),
+                                            dbc.ModalBody(manual),
                                             dbc.ModalFooter(
                                                 dbc.Button(
                                                     'Close', id='close', className='ms-auto', n_clicks=0,
@@ -1000,7 +1069,7 @@ if __name__ == "__main__":
                         dbc.Row([
                             dbc.Col([
                                 html.H3('Language map'),
-                                html.P('Description'),
+                                html.P('Genealogical data on the languages'),
                                 dcc.Dropdown(
                                     id='language_selection_map',
                                     options = languages_for_map,
@@ -1023,7 +1092,7 @@ if __name__ == "__main__":
                     dbc.Row([
                         dbc.Col([
                             html.Div([
-                                    html.H4('Average value for each category:', style={'font-weight': 'bold'}, className='text-center'),
+                                    html.H4('Average values of each category', style={'font-weight': 'bold'}, className='text-center'),
                                     html.P('graph 1', style={'font-style': 'italic'}, className='text-center'),
                                     dcc.Graph(id='middle_cat'),
                             ]),
@@ -1031,7 +1100,7 @@ if __name__ == "__main__":
 
                         dbc.Col([
                             html.Div([
-                                    html.H4('Average values for all families, layers and categories:', style={'font-weight': 'bold'}, className='text-center'),
+                                    html.H4('Average values of language families', style={'font-weight': 'bold'}, className='text-center'),
                                     html.P('graph 2', style={'font-style': 'italic'}, className='text-center'),
                                     dcc.Graph(id='graph1'),
                                     html.P(id='note_graph1', style={'color': '#999999', 'font-style': 'italic', 'margin-top': '1.5rem'}, className='text-center')
@@ -1045,11 +1114,30 @@ if __name__ == "__main__":
                     ], style={'box-shadow': '0 2px 3.5px rgba(0, 0, 0, .2)', 'padding-top': '2rem', 'border-radius': '4px', 'margin-top': '2rem', 'background-color': '#ffffff'}),
                 ]),
                 html.Br(),
+
                 html.Div(children=[
                     dbc.Row([
                         dbc.Col([
-                            html.H4('Average values for all categories\n(for each language family):', style={'text-align': 'center', 'font-weight': 'bold'}),
+                            html.H4('Average values of each layer', style={'text-align': 'center', 'font-weight': 'bold'}),
                             html.P('graph 3', style={'font-style': 'italic'}, className='text-center'),
+                            html.Div(dcc.Graph(id='graph11')),
+                        ], width=6),
+                
+                        dbc.Col([
+                                html.H4('Average values of all languages', style={'text-align': 'center', 'font-weight': 'bold'}),
+                                html.P('graph 4', style={'font-style': 'italic'}, className='text-center'),
+                                dcc.Graph(id='graph12'),
+                        ], width=6),
+                    ], style={'box-shadow': '0 2px 3.5px rgba(0, 0, 0, .2)', 'padding-top': '3rem', 'border-radius': '4px', 'margin-top': '2em', 'padding-bottom': '2rem'})
+                                    
+                ]),
+
+                html.Br(),
+                html.Div(children=[
+                    dbc.Row([
+                        dbc.Col([
+                            html.H4('Average values of all categories\n(for each language family)', style={'text-align': 'center', 'font-weight': 'bold'}),
+                            html.P('graph 5', style={'font-style': 'italic'}, className='text-center'),
                             dcc.Dropdown(
                                 id='dropdown',  
                                 multi=True
@@ -1058,8 +1146,8 @@ if __name__ == "__main__":
                         ], width=6),
                 
                         dbc.Col([
-                                html.H4('Values for each layer and category (for each language):', style={'text-align': 'center', 'font-weight': 'bold'}),
-                                html.P('graph 4', style={'font-style': 'italic'}, className='text-center'),
+                                html.H4('Values of the languages represented in the selected category', style={'text-align': 'center', 'font-weight': 'bold'}),
+                                html.P('graph 6', style={'font-style': 'italic'}, className='text-center'),
                                 dcc.Dropdown(id='category'),
                                 dcc.Dropdown(id='languages', multi=True, style={"margin-top": "0.5rem"},), 
                                 dcc.Graph(id='graph3'),
@@ -1070,8 +1158,8 @@ if __name__ == "__main__":
                 html.Div(children=[
                     dbc.Row([
                         dbc.Col([
-                                html.H4('Values for each layer and category (for certain language):', style={'text-align': 'center', 'font-weight': 'bold'}),
-                                html.P('graph 5', style={'font-style': 'italic'}, className='text-center'),
+                                html.H4('Values of the categories of the selected language', style={'text-align': 'center', 'font-weight': 'bold'}),
+                                html.P('graph 7', style={'font-style': 'italic'}, className='text-center'),
                                 dcc.Dropdown(id='language_graph4'), 
                                 dcc.Dropdown(id='categories_graph4', multi=True, style={"margin-top": "0.5rem"}),
                                 dcc.Graph(id='graph4'),
@@ -1097,13 +1185,13 @@ if __name__ == "__main__":
                     html.Div(children=[
                             dbc.Row([
                                 dbc.Col([
-                                        html.H4('Structure of the language family:', style={'text-align': 'center', 'font-weight': 'bold'}, className='text-center'),
-                                        html.P('graph 6', style={'font-style': 'italic'}, className='text-center'),
+                                        html.H4('Structure of the language family', style={'text-align': 'center', 'font-weight': 'bold'}, className='text-center'),
+                                        html.P('graph 8', style={'font-style': 'italic'}, className='text-center'),
                                         dcc.Graph(id='treemap1'),
                                         ], width=4),
                                 dbc.Col([
-                                        html.H4('Average values by category:', style={'text-align': 'center', 'font-weight': 'bold'}),
-                                        html.P('graph 7', style={'font-style': 'italic'}, className='text-center'),
+                                        html.H4('Average values by category', style={'text-align': 'center', 'font-weight': 'bold'}),
+                                        html.P('graph 9', style={'font-style': 'italic'}, className='text-center'),
                                         
 
                                         html.Div(className='box',
@@ -1123,22 +1211,22 @@ if __name__ == "__main__":
     
                 ]),
                 dbc.Row([
-                        html.P('graph 8', style={'font-style': 'italic'}, className='text-center'),
+                        html.P('graph 10', style={'font-style': 'italic'}, className='text-center'),
                         dbc.Col(dcc.Dropdown(id='quantity_of_languages'), width=8, style={'margin-bottom': '2rem', 'width': '30%'}),
                         html.Div(id='graphs_for_family'),
                         ], style={'margin-bottom': '3em', 'box-shadow': '0 2px 3.5px rgba(0, 0, 0, .2)', 'padding-top': '2rem', 'border-radius': '4px', 'margin-top': '2rem', 'margin-bottom': '2rem', 'background-color': '#ffffff'}),
                 
                 html.Div(children=[
                     dbc.Row([
-                        html.H4('Average values for all layers (for each "category-language" pair):', style={'text-align': 'center', 'font-weight': 'bold'}, className='text-center'),
-                        html.P('graph 9', style={'font-style': 'italic'}, className='text-center'),
+                        html.H4('Average values for each "category-language" pair', style={'text-align': 'center', 'font-weight': 'bold'}, className='text-center'),
+                        html.P('graph 11', style={'font-style': 'italic'}, className='text-center'),
                         dcc.Graph(id='heatmap1'),
                     ], justify='center')
                 ], style={'align': 'center', 'justify': 'center', 'box-shadow': '0 2px 3.5px rgba(0, 0, 0, .2)', 'padding-top': '2rem', 'padding-bottom': '2rem', 'border-radius': '4px', 'margin-top': '2rem', 'background-color': '#ffffff'}),
 
                 html.Div(children=[
-                    html.H4('Values for each layer for each language and each category:', style={'text-align': 'center', 'font-weight': 'bold'}, className='text-center'),
-                    html.P('graph 10', style={'font-style': 'italic'}, className='text-center'),
+                    html.H4('Values of all languages in which the selected category is represented', style={'text-align': 'center', 'font-weight': 'bold'}, className='text-center'),
+                    html.P('graph 12', style={'font-style': 'italic'}, className='text-center'),
                     dcc.Dropdown(id='category_heatmap2'),
                     dcc.Graph(id='heatmap2')
                 ], style={'box-shadow': '0 2px 3.5px rgba(0, 0, 0, .2)', 'padding-top': '2rem', 'border-radius': '4px', 'margin-top': '2rem', 'background-color': '#ffffff'}),
