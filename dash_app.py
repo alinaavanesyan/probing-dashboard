@@ -101,8 +101,7 @@ df_layers_middle = pd.read_csv('data/layers_middle.csv')
 languages_for_map = [{'label': str(i), 'value': str(i)} for i in genealogy['language'].tolist()]
 with open('manual.txt', 'r', encoding='utf-8') as f:
     manual = [line.rstrip() for line in f]
-manual = [i for i in manual]
-
+   
 @app.callback(
     Output("modal", "is_open"),
     [Input("open", "n_clicks"), Input("close", "n_clicks")],
