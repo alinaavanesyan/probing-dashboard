@@ -1,14 +1,14 @@
-# Coursework
+# Dashboard
 
-Описание переменных файла dash_app.py: https://docs.google.com/document/d/1xtvCqSjs6RUEKgqgWT3gQ9PPWrgJPUuiddiEPSr_uuI/edit
+This Dashboard is a probing visualization tool. It can help to interpret a large amount of files with numerical data that resulted from multilingual probing.
 
-Для запуска программы нужно поместить следующие штуки в одну папку:
-- файлы *all_languages.csv* и *genealogy.csv*,
-- папка *assets*,
-- папка *Probing results* (её в репозитории нет),
-- файл *data_app.py*,
-- файл *dash_app.py* (сама программа)
+To run the program, you need to put the following items in one folder:
+- files *all_languages.csv* and *genealogy.csv*,
+- folder *assets*,
+- folder *Probing results* (it is not in the repository, these are the results of the probing experiments that you have run),
+- file *data_launch.py *,
+- file *dash_app.py * (the program itself)
+- 
+Сначала нужно запустить файл *data_launch.py*, а потом *data_app.py*. *data_launch.py* creates a lot of files that are the basis of Dashboard graphs. You do not need to run this file every time, use it only when you have supplemented the probing results with new files.
 
-Сначала нужно запустить файл *data_app.py*, а потом *data_app.py*
-
-Файл table_of_lang.py запускать не нужно: это файл, который создает all_languages.csv
+File *table_of_lang.py* no need to run: this is the file that creates *all_languages.csv*
