@@ -1,4 +1,4 @@
-# Dashboard
+# Probing Dashboard
 
 This Dashboard is a probing visualization tool. It can help to interpret a large amount of files with numerical data that resulted from multilingual probing.
 
