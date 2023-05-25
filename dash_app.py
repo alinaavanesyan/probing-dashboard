@@ -101,8 +101,7 @@ df_layers_middle = pd.read_csv('data/layers_middle.csv')
 languages_for_map = [{'label': str(i), 'value': str(i)} for i in genealogy['language'].tolist()]
 with open('manual.txt', 'r', encoding='utf-8') as f:
     manual = [line.rstrip() for line in f]
-manual = [i for i in manual if i != '']
-manual = '\n'.join(map(str, manual))
+manual = [i for i in manual]
 
 @app.callback(
     Output("modal", "is_open"),
@@ -1046,8 +1045,13 @@ if __name__ == "__main__":
                                     dbc.Modal(
                                         [
                                             dbc.ModalHeader(dbc.ModalTitle('Manual')),
-                                            dbc.ModalBody(manual),
-                                            dbc.ModalFooter(
+                                            dbc.ModalBody(html.Div(children = [
+                                                                dbc.Row([
+                                                                    html.P(a) for a in manual
+                                                                ])
+                                                                ]
+                                                )),
+                                                dbc.ModalFooter(
                                                 dbc.Button(
                                                     'Close', id='close', className='ms-auto', n_clicks=0,
                                                 )
