@@ -6,6 +6,7 @@ To run the program, you need to put the following items in one folder:
 - files *all_languages.csv* and *genealogy.csv*,
 - folder *assets*,
 - folder *Probing results* (it is not in the repository, these are the results of the probing experiments that you have run),
+- file *manual.txt*,
 - file *data_launch.py*,
 - file *dash_app* (the program itself)
 
